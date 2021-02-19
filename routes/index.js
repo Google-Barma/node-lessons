@@ -16,6 +16,7 @@ router.get('/', (req, res, next) => {
   res.render('index', { message: req.flash('message') });
 });
 
+//скорее всего путь: '/login'
 router.post('/', (req, res, next) => {
   passport.authenticate('local', (err, user) => {
     if (err) {
@@ -38,4 +39,36 @@ router.get('/registration', (req, res, next) => {
   res.render('registration', { message: req.flash('message') });
 });
 
-router.
+router.post('/registration', async (req, res, next) => {
+  const { username, email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (user) {
+      req.flash('message', 'Пользователь с таким Email уже существует');
+      return res.redirect('/');
+    }
+    const newUser = new User({ username, email });
+    newUser.setPassword(password);
+    await newUser.save();
+
+    req.flash('message', 'Вы успешно зарегистрировались');
+    res.redirect('/');
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/profile', isLoggedIn, (req, res, next) => {
+  console.log(req.session.passport);
+
+  const { username, email } = req.user;
+  res.render('profile', { username, email });
+});
+
+router.get('/logout', function (req, res) {
+  req.logOut();
+  res.redirect('/');
+});
+
+export default router;
