@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import bCrypt from "bcryptjs";
+import mongoose from 'mongoose';
+import bCrypt from 'bcryptjs';
 
 const Schema = mongoose.Schema;
 
@@ -7,23 +7,23 @@ const userSchema = new Schema({
   username: String,
   email: {
     type: String,
-    required: [true, "Email required"],
+    required: [true, 'Email required'],
     unique: true,
   },
   password: {
     type: String,
-    requred: [true, "Password required"],
+    required: [true, 'Password required'],
   },
 });
 
-userSchema.method.setPassword = function (password) {
+userSchema.methods.setPassword = function (password) {
   this.password = bCrypt.hashSync(password, bCrypt.genSaltSync(6));
 };
 
-userSchema.method.validPassword = function (password) {
+userSchema.methods.validPassword = function (password) {
   return bCrypt.compareSync(password, this.password);
 };
 
-const User = mongoose.model("user", userSchema);
+const User = mongoose.model('user', userSchema);
 
 export default User;

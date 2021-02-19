@@ -11,12 +11,9 @@ import './config/config-passport.js';
 import indexRouter from './routes/index.js';
 import createDirnameAndFileName from './lib/dirname.js';
 
-const { __dirname } = createDirnameAndFileName(import.meta.url);
-
 dotenv.config();
-
 mongoose.Promise = global.Promise;
-const connection = mongoose
+mongoose
   .connect(process.env.DATA_HOST, {
     useNewUrlParser: true,
     useCreateIndex: true,
@@ -24,16 +21,16 @@ const connection = mongoose
   })
   .catch(console.log());
 
-const server = express();
-server.set('views', path.join(__dirname, 'views'));
-server.set('view engine', 'ejs');
+const { __dirname } = createDirnameAndFileName(import.meta.url);
 
-server.use(logger('dev'));
-server.use(cors());
+const app = express();
 
-server.use(express.urlencoded({ extended: false }));
-server.use(express.static(path.join(__dirname, 'public')));
-server.use(
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+app.use(express.urlencoded({ extended: false }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(
   session({
     secret: 'secret-word',
     key: 'session-key',
@@ -42,25 +39,24 @@ server.use(
       httpOnly: true,
       maxAge: null,
     },
-    seveUninitialized: false,
+    saveUninitialized: false,
     resave: false,
   }),
 );
+app.use(flash());
 
-server.use(flash());
+app.use(passport.initialize());
+app.use(passport.session());
 
-server.use(passport.initialize());
-server.use(passport.session());
+app.use('/', indexRouter);
 
-server.use('/', indexRouter);
-
-server.use((req, res, next) => {
+app.use((req, res, next) => {
   const err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
-server.use((err, req, res, next) => {
+app.use((err, req, res, next) => {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
   res.status(err.status || 500);
@@ -69,6 +65,6 @@ server.use((err, req, res, next) => {
 
 const port = process.env.PORT || '3000';
 
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
 });
